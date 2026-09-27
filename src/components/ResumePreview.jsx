@@ -1,3 +1,4 @@
+import React from "react";
 import ClassicPreview from "./templates/ClassicPreview";
 import MinimalPreview from "./templates/MinimalPreview";
 import BoldPreview from "./templates/BoldPreview";
@@ -24,9 +25,8 @@ import StellarPreview from "./templates/StellarPreview";
 import AtelierPreview from "./templates/AtelierPreview";
 
 // =====================================================
-// BUILDCV — TEMPLATE COMPONENTS
+// BUILDCV — TEMPLATE COMPONENTS MAP
 // =====================================================
-
 const templateComponents = {
   modern: ModernPreview,
   professional: ProfessionalPreview,
@@ -59,7 +59,6 @@ const templateComponents = {
 // =====================================================
 // BUILDCV — DEFAULT OPTIONAL SECTIONS
 // =====================================================
-
 const DEFAULT_CERTIFICATIONS = {
   enabled: false,
   items: [],
@@ -86,9 +85,8 @@ const DEFAULT_REFERENCES = {
 };
 
 // =====================================================
-// BUILDCV — SAFE ARRAY
+// BUILDCV — SAFE ARRAY HELPER
 // =====================================================
-
 function safeArray(value) {
   return Array.isArray(value) ? value : [];
 }
@@ -96,17 +94,6 @@ function safeArray(value) {
 // =====================================================
 // BUILDCV — SAFE OPTIONAL ARRAY SECTION
 // =====================================================
-//
-// Supports:
-//
-// {
-//   enabled: true,
-//   items: [...]
-// }
-//
-// Also safely handles an old/direct array format.
-//
-
 function normalizeArraySection(value, fallback) {
   if (Array.isArray(value)) {
     return {
@@ -116,7 +103,7 @@ function normalizeArraySection(value, fallback) {
     };
   }
 
-  if (value && typeof value === "object") {
+  if (value && typeof value === "object" && value !== null) {
     return {
       ...fallback,
       ...value,
@@ -135,26 +122,8 @@ function normalizeArraySection(value, fallback) {
 }
 
 // =====================================================
-// BUILDCV — SAFE INTERESTS
+// BUILDCV — SAFE INTERESTS HELPER
 // =====================================================
-//
-// Supports:
-//
-// {
-//   enabled: true,
-//   value: "Reading, Travel"
-// }
-//
-// {
-//   enabled: true,
-//   items: ["Reading", "Travel"]
-// }
-//
-// "Reading, Travel"
-//
-// ["Reading", "Travel"]
-//
-
 function normalizeInterests(value) {
   if (Array.isArray(value)) {
     return {
@@ -175,7 +144,7 @@ function normalizeInterests(value) {
     };
   }
 
-  if (value && typeof value === "object") {
+  if (value && typeof value === "object" && value !== null) {
     const items = safeArray(value.items);
 
     const stringValue =
@@ -185,7 +154,7 @@ function normalizeInterests(value) {
             .map((item) => {
               if (typeof item === "string") return item;
 
-              if (item && typeof item === "object") {
+              if (item && typeof item === "object" && item !== null) {
                 return (
                   item.name ||
                   item.title ||
@@ -218,28 +187,21 @@ function normalizeInterests(value) {
 }
 
 // =====================================================
-// BUILDCV — RESUME PREVIEW
+// BUILDCV — RESUME PREVIEW COMPONENT
 // =====================================================
-
 function ResumePreview({
   selectedTemplate = "modern",
   formData = {},
-  previewId = "resume-preview",
+  previewId = "cv-preview-container", // Default set to match ATS print stylesheet selector (#cv-preview-container)
   fitToContainer = false,
 }) {
-  // ===================================================
-  // SAFETY
-  // ===================================================
-
+  // Safe source data extraction
   const sourceData =
-    formData && typeof formData === "object"
+    formData && typeof formData === "object" && formData !== null
       ? formData
       : {};
 
-  // ===================================================
-  // GET TEMPLATE ID
-  // ===================================================
-
+  // Extract template ID safely
   const templateId =
     typeof selectedTemplate === "string"
       ? selectedTemplate.trim().toLowerCase()
@@ -248,10 +210,7 @@ function ResumePreview({
         selectedTemplate?.preview ||
         "modern";
 
-  // ===================================================
-  // PERSONAL INFORMATION
-  // ===================================================
-
+  // Safely extract personal information
   const personal = {
     fullName: "",
     jobTitle: "",
@@ -262,50 +221,20 @@ function ResumePreview({
     github: "",
     summary: "",
     profileImage: "",
-    ...(sourceData.personal &&
-    typeof sourceData.personal === "object"
+    ...(sourceData.personal && typeof sourceData.personal === "object" && sourceData.personal !== null
       ? sourceData.personal
       : {}),
   };
 
-  // ===================================================
-  // NORMALIZED RESUME DATA
-  // ===================================================
-  //
-  // IMPORTANT:
-  // Start with ...sourceData.
-  //
-  // This means we DO NOT throw away any fields that
-  // another template may use.
-  //
-  // Then normalize the known sections safely.
-  // ===================================================
-
+  // Normalize full dataset
   const normalizedData = {
-    // Preserve EVERYTHING coming from Builder
     ...sourceData,
-
-    // -------------------------------------------------
-    // Personal
-    // -------------------------------------------------
-
     personal,
 
-    // -------------------------------------------------
-    // Required sections
-    // -------------------------------------------------
-
     education: safeArray(sourceData.education),
-
     experience: safeArray(sourceData.experience),
-
     skills: safeArray(sourceData.skills),
-
     projects: safeArray(sourceData.projects),
-
-    // -------------------------------------------------
-    // Optional sections
-    // -------------------------------------------------
 
     certifications: normalizeArraySection(
       sourceData.certifications,
@@ -327,22 +256,9 @@ function ResumePreview({
       DEFAULT_REFERENCES
     ),
 
-    interests: normalizeInterests(
-      sourceData.interests
-    ),
+    interests: normalizeInterests(sourceData.interests),
 
-    // -------------------------------------------------
-    // Flat personal values
-    //
-    // Some templates use:
-    // data.fullName
-    //
-    // while others use:
-    // data.personal.fullName
-    //
-    // Keep BOTH formats available.
-    // -------------------------------------------------
-
+    // Flat personal values for legacy template compatibility
     fullName: personal.fullName,
     jobTitle: personal.jobTitle,
     email: personal.email,
@@ -354,94 +270,59 @@ function ResumePreview({
     profileImage: personal.profileImage,
   };
 
-  // ===================================================
-  // TEMPLATE PROPS
-  // ===================================================
-  //
-  // Every template receives the SAME complete data.
-  //
-  // formData → normalizedData
-  // data     → normalizedData
-  //
-  // This prevents one template from receiving less data
-  // than another.
-  // ===================================================
-
   const templateProps = {
     formData: normalizedData,
     data: normalizedData,
   };
 
-  // ===================================================
-  // SELECT TEMPLATE
-  // ===================================================
-
+  // Select the appropriate template component or fall back to ModernPreview
   const TemplateComponent =
-    templateComponents[templateId] ||
-    ModernPreview;
+    templateComponents[templateId] || ModernPreview;
 
-  // ===================================================
-  // RENDER
-  // ===================================================
+  // Fallback UI if template component fails to resolve
+  if (!TemplateComponent) {
+    return (
+      <div
+        id={previewId}
+        style={{
+          padding: "20px",
+          color: "#dc2626",
+          backgroundColor: "#fef2f2",
+          borderRadius: "8px",
+          border: "1px solid #fca5a5",
+        }}
+      >
+        <p style={{ fontWeight: "bold" }}>Error Loading Template</p>
+        <p style={{ fontSize: "14px" }}>
+          Selected template "{templateId}" could not be rendered.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div
       id={previewId}
       className={`resume-preview${
-        fitToContainer
-          ? " resume-preview--fit"
-          : ""
+        fitToContainer ? " resume-preview--fit" : ""
       }`}
       data-template={templateId}
       style={{
-        // ---------------------------------------------
-        // A4 PAGE SIZE
-        // ---------------------------------------------
-
         width: "210mm",
         minWidth: "210mm",
-
         minHeight: "297mm",
         height: "auto",
-
-        // ---------------------------------------------
-        // IMPORTANT:
-        // NO GLOBAL PADDING
-        //
-        // Every template controls its own padding.
-        // ---------------------------------------------
-
         margin: 0,
         padding: 0,
-
-        // ---------------------------------------------
-        // Resume background
-        // ---------------------------------------------
-
         backgroundColor: "#FFFFFF",
         color: "#111827",
-
-        // ---------------------------------------------
-        // Layout
-        // ---------------------------------------------
-
         boxSizing: "border-box",
-
-        // ---------------------------------------------
-        // IMPORTANT:
-        // Never clip template content.
-        // ---------------------------------------------
-
         overflow: "visible",
-
         position: "relative",
-
         flexShrink: 0,
       }}
     >
-      <TemplateComponent
-        {...templateProps}
-      />
+      <TemplateComponent {...templateProps} />
     </div>
   );
 }

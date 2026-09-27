@@ -590,6 +590,48 @@ button:focus-visible {
   scrollbar-color: #c7d2fe transparent;
 }
 
+
+@media print {
+  /* Hide non-essential layout controls */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Display only the printable CV container */
+  #cv-preview-container,
+  #cv-preview-container * {
+    visibility: visible !important;
+  }
+
+  #cv-preview-container {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  /* Prevent elements from awkwardly breaking across page boundaries */
+  .cv-section-item {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  h1, h2, h3 {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+}
+
 /* =========================================================
    MOBILE-FIRST FINISHING LAYER
    Keeps every existing view and piece of content available,
