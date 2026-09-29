@@ -332,7 +332,6 @@ function Projects({ formData, setFormData }) {
           min-h-0
           flex-1
           overflow-y-auto
-          overscroll-contain
           bg-[#F8FAFC]
           px-5
           py-7
